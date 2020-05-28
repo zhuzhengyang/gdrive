@@ -23,7 +23,7 @@ type ListFilesArgs struct {
 func (self *Drive) List(args ListFilesArgs) (err error) {
 	listArgs := listAllFilesArgs{
 		query:     args.Query,
-		fields:    []googleapi.Field{"nextPageToken", "files(id,name,md5Checksum,mimeType,size,createdTime,parents)"},
+		fields:    []googleapi.Field{"nextPageToken", "files(id,name,md5Checksum,mimeType,size,createdTime,modifiedTime,lastModifyingUser,parents)"},
 		sortOrder: args.SortOrder,
 		maxFiles:  args.MaxFiles,
 	}
@@ -110,16 +110,22 @@ func PrintFileList(args PrintFileListArgs) {
 	w.Init(args.Out, 0, 0, 3, ' ', 0)
 
 	if !args.SkipHeader {
-		fmt.Fprintln(w, "Id\tName\tType\tSize\tCreated")
+		fmt.Fprintln(w, "Id\tName\tType\tSize\tCreated\tModified\tLastModifyingUser")
 	}
 
 	for _, f := range args.Files {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+		name := ""
+		if f.LastModifyingUser != nil {
+			name = f.LastModifyingUser.EmailAddress
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			f.Id,
 			truncateString(f.Name, args.NameWidth),
 			filetype(f),
 			formatSize(f.Size, args.SizeInBytes),
 			formatDatetime(f.CreatedTime),
+			formatDatetime(f.ModifiedTime),
+			name,
 		)
 	}
 
