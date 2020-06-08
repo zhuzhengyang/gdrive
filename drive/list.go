@@ -23,6 +23,7 @@ type ListFilesArgs struct {
 func (self *Drive) List(args ListFilesArgs) (err error) {
 	listArgs := listAllFilesArgs{
 		query:     args.Query,
+		// https://developers.google.com/drive/api/v3/reference/files#resource
 		fields:    []googleapi.Field{"nextPageToken", "files(id,name,md5Checksum,mimeType,size,createdTime,modifiedTime,lastModifyingUser,parents)"},
 		sortOrder: args.SortOrder,
 		maxFiles:  args.MaxFiles,

@@ -69,7 +69,7 @@ Check our [releases](https://github.com/gdrive-org/gdrive/releases) section.
 
 ## Compile from source
 ```bash
-go get github.com/prasmussen/gdrive
+go get gdrive
 ```
 The gdrive binary should now be available at `$GOPATH/bin/gdrive`
 
