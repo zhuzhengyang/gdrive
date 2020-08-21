@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,8 +15,10 @@ import (
 	"gdrive/drive"
 )
 
-const ClientId = "177401336656-tbjbove9os185cm2k44v8f9kr1uduqsb.apps.googleusercontent.com"
-const ClientSecret = "000Ed_MWPrWOxk5kYv16XTJi"
+var ClientId = "177401336656-tbjbove9os185cm2k44v8f9kr1uduqsb.apps.googleusercontent.com"
+var ClientSecret = "000Ed_MWPrWOxk5kYv16XTJi"
+
+const ClientSecretFilename = "client_secret.json"
 const TokenFilename = "token_v2.json"
 const DefaultCacheFileName = "file_cache.json"
 
@@ -344,6 +347,11 @@ func getOauthClient(args cli.Arguments) (*http.Client, error) {
 	if args.String("refreshToken") != "" && args.String("accessToken") != "" {
 		ExitF("Access token not needed when refresh token is provided")
 	}
+	configDir := getConfigDir(args)
+	secretPath := ConfigFilePath(configDir, ClientSecretFilename)
+	if err := SetClientSecret(secretPath); err != nil {
+		return nil, err
+	}
 
 	if args.String("refreshToken") != "" {
 		return auth.NewRefreshTokenClient(ClientId, ClientSecret, args.String("refreshToken")), nil
@@ -352,8 +360,6 @@ func getOauthClient(args cli.Arguments) (*http.Client, error) {
 	if args.String("accessToken") != "" {
 		return auth.NewAccessTokenClient(ClientId, ClientSecret, args.String("accessToken")), nil
 	}
-
-	configDir := getConfigDir(args)
 
 	if args.String("serviceAccount") != "" {
 		serviceAccountPath := ConfigFilePath(configDir, args.String("serviceAccount"))
@@ -454,4 +460,27 @@ func checkDownloadArgs(args cli.Arguments) {
 	if args.Bool("recursive") && args.Bool("delete") {
 		ExitF("--delete is not allowed for recursive downloads")
 	}
+}
+
+type GoogleApiSecret struct {
+	ClientId     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+}
+
+func SetClientSecret(path string) error {
+	content, exists, err := auth.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return nil
+	}
+	token := &GoogleApiSecret{}
+	err = json.Unmarshal(content, token)
+	if err != nil {
+		return err
+	}
+	ClientId = token.ClientId
+	ClientSecret = token.ClientSecret
+	return nil
 }
